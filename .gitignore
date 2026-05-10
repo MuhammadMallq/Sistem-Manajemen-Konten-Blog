@@ -1,9 +1,29 @@
 # Dependencies
-.psci_modules
-.spago
-bower_components
-node_modules
+node_modules/
 
-# Generated files
-.psci
-output
+# Build output
+frontend/dist/
+backend/*.exe
+backend/blog-cms
+
+# Environment
+.env
+backend/.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
