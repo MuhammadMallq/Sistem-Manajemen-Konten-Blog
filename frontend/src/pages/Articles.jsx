@@ -21,6 +21,7 @@ export default function Articles() {
   const [showModal, setShowModal] = useState(false);
   const [showDelete, setShowDelete] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ title: '', content: '', excerpt: '', cover_image: '', status: 'draft', author_id: '', category_id: '' });
 
@@ -85,7 +86,15 @@ export default function Articles() {
       >
         {filtered.map(a => (
           <tr key={a.id}>
-            <td style={{ fontWeight: 500, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</td>
+            <td 
+              onClick={() => setViewing(a)}
+              style={{ fontWeight: 500, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', color: 'var(--accent-blue)' }}
+              title="Klik untuk melihat detail"
+              onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+            >
+              {a.title}
+            </td>
             <td>{a.author?.name || '-'}</td>
             <td><Badge type="category">{a.category?.name || '-'}</Badge></td>
             <td><Badge type={a.status}>{a.status}</Badge></td>
@@ -129,6 +138,44 @@ export default function Articles() {
             <Button type="submit" variant="primary">Simpan</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal title="Detail Artikel" isOpen={!!viewing} onClose={() => setViewing(null)}>
+        {viewing && (
+          <div style={{ lineHeight: '1.6' }}>
+            <h3 style={{ fontSize: '22px', marginBottom: '8px', color: 'var(--text-primary)' }}>{viewing.title}</h3>
+            
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', fontSize: '13px', alignItems: 'center' }}>
+              <Badge type="category">{viewing.category?.name || 'Tanpa Kategori'}</Badge>
+              <Badge type={viewing.status}>{viewing.status}</Badge>
+              <span style={{ color: 'var(--text-muted)' }}>
+                Ditulis oleh <strong>{viewing.author?.name || 'Anonim'}</strong> pada {new Date(viewing.created_at).toLocaleDateString('id-ID')}
+              </span>
+            </div>
+
+            {viewing.cover_image && (
+              <img 
+                src={viewing.cover_image} 
+                alt="Cover" 
+                style={{ width: '100%', borderRadius: '8px', marginBottom: '20px', maxHeight: '300px', objectFit: 'cover' }} 
+              />
+            )}
+
+            {viewing.excerpt && (
+              <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '14px', fontStyle: 'italic', borderLeft: '4px solid var(--accent-blue)' }}>
+                {viewing.excerpt}
+              </div>
+            )}
+
+            <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary)', fontSize: '15px' }}>
+              {viewing.content}
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '32px' }}>
+              <Button onClick={() => setViewing(null)} variant="secondary">Tutup</Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       <ConfirmDialog 
