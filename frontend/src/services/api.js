@@ -9,31 +9,31 @@ const api = axios.create({
   },
 });
 
-// ============ DASHBOARD ============
+//  DASHBOARD 
 export const getDashboardStats = () => api.get('/dashboard');
 
-// ============ AUTHORS (PENULIS) ============
+//  AUTHORS (PENULIS) 
 export const getAuthors = () => api.get('/authors');
 export const getAuthorById = (id) => api.get(`/authors/${id}`);
 export const createAuthor = (data) => api.post('/authors', data);
 export const updateAuthor = (id, data) => api.put(`/authors/${id}`, data);
 export const deleteAuthor = (id) => api.delete(`/authors/${id}`);
 
-// ============ CATEGORIES (KATEGORI) ============
+//  CATEGORIES (KATEGORI) 
 export const getCategories = () => api.get('/categories');
 export const getCategoryById = (id) => api.get(`/categories/${id}`);
 export const createCategory = (data) => api.post('/categories', data);
 export const updateCategory = (id, data) => api.put(`/categories/${id}`, data);
 export const deleteCategory = (id) => api.delete(`/categories/${id}`);
 
-// ============ ARTICLES (ARTIKEL) ============
+//  ARTICLES (ARTIKEL) 
 export const getArticles = (params) => api.get('/articles', { params });
 export const getArticleById = (id) => api.get(`/articles/${id}`);
 export const createArticle = (data) => api.post('/articles', data);
 export const updateArticle = (id, data) => api.put(`/articles/${id}`, data);
 export const deleteArticle = (id) => api.delete(`/articles/${id}`);
 
-// ============ COMMENTS (KOMENTAR) ============
+//  COMMENTS (KOMENTAR) 
 export const getComments = (params) => api.get('/comments', { params });
 export const getCommentById = (id) => api.get(`/comments/${id}`);
 export const createComment = (data) => api.post('/comments', data);

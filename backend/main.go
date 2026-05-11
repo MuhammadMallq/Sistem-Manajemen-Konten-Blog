@@ -15,7 +15,7 @@ import (
 func main() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️ File .env tidak ditemukan, menggunakan environment variables")
+		log.Println("File .env tidak ditemukan, menggunakan environment variables")
 	}
 
 	// Koneksi database dan auto-migrate
@@ -43,7 +43,7 @@ func main() {
 	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
-			"message": "Blog CMS API berjalan dengan baik 🚀",
+			"message": "Blog CMS API berjalan dengan baik",
 		})
 	})
 
@@ -53,7 +53,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("🚀 Server berjalan di http://localhost:%s", port)
+	log.Printf("Server berjalan di http://localhost:%s", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatal("Gagal menjalankan server:", err)
 	}
