@@ -1,92 +1,81 @@
 package controllers
 
 import (
-	"net/http"
-
 	"github.com/blog-cms/backend/config"
 	"github.com/blog-cms/backend/models"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
-func GetAllComments(c *gin.Context) {
+func GetAllComments(c *fiber.Ctx) error {
 	var comments []models.Comment
 
 	query := config.DB.Preload("Article")
 
-	
 	if articleID := c.Query("article_id"); articleID != "" {
 		query = query.Where("article_id = ?", articleID)
 	}
 
 	result := query.Order("created_at DESC").Find(&comments)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil data komentar",
 		"data":    comments,
 	})
 }
 
-
-func GetCommentByID(c *gin.Context) {
-	id := c.Param("id")
+func GetCommentByID(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var comment models.Comment
 	result := config.DB.Preload("Article").First(&comment, id)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Komentar tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Komentar tidak ditemukan"})
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil data komentar",
 		"data":    comment,
 	})
 }
 
 // CreateComment - Membuat komentar baru
-func CreateComment(c *gin.Context) {
+func CreateComment(c *fiber.Ctx) error {
 	var input models.Comment
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	// Pastikan artikel ada
 	var article models.Article
 	if err := config.DB.First(&article, input.ArticleID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Artikel tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Artikel tidak ditemukan"})
 	}
 
 	result := config.DB.Create(&input)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
 
 	// Reload dengan relasi
 	config.DB.Preload("Article").First(&input, input.ID)
 
-	c.JSON(http.StatusCreated, gin.H{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Berhasil membuat komentar baru",
 		"data":    input,
 	})
 }
 
 // UpdateComment - Memperbarui data komentar
-func UpdateComment(c *gin.Context) {
-	id := c.Param("id")
+func UpdateComment(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var comment models.Comment
 	if err := config.DB.First(&comment, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Komentar tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Komentar tidak ditemukan"})
 	}
 
 	var input models.Comment
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	config.DB.Model(&comment).Updates(models.Comment{
@@ -95,37 +84,35 @@ func UpdateComment(c *gin.Context) {
 		Content:        input.Content,
 	})
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil memperbarui data komentar",
 		"data":    comment,
 	})
 }
 
 // DeleteComment - Menghapus komentar
-func DeleteComment(c *gin.Context) {
-	id := c.Param("id")
+func DeleteComment(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var comment models.Comment
 	if err := config.DB.First(&comment, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Komentar tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Komentar tidak ditemukan"})
 	}
 
 	config.DB.Delete(&comment)
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil menghapus komentar",
 	})
 }
 
 // GetCommentsByArticleID - Mengambil komentar berdasarkan Article ID
-func GetCommentsByArticleID(c *gin.Context) {
-	articleID := c.Param("id")
+func GetCommentsByArticleID(c *fiber.Ctx) error {
+	articleID := c.Params("id")
 	var comments []models.Comment
 	result := config.DB.Where("article_id = ?", articleID).Order("created_at DESC").Find(&comments)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil komentar artikel",
 		"data":    comments,
 	})

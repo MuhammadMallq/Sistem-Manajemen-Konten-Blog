@@ -1,17 +1,16 @@
 package controllers
 
 import (
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/blog-cms/backend/config"
 	"github.com/blog-cms/backend/models"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 // GetAllArticles - Mengambil semua data artikel dengan relasi
-func GetAllArticles(c *gin.Context) {
+func GetAllArticles(c *fiber.Ctx) error {
 	var articles []models.Article
 
 	query := config.DB.Preload("Author").Preload("Category").Preload("Comments")
@@ -38,11 +37,10 @@ func GetAllArticles(c *gin.Context) {
 
 	result := query.Order("created_at DESC").Find(&articles)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil data artikel",
 		"data":    articles,
 		"total":   len(articles),
@@ -50,26 +48,24 @@ func GetAllArticles(c *gin.Context) {
 }
 
 // GetArticleByID - Mengambil data artikel berdasarkan ID
-func GetArticleByID(c *gin.Context) {
-	id := c.Param("id")
+func GetArticleByID(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var article models.Article
 	result := config.DB.Preload("Author").Preload("Category").Preload("Comments").First(&article, id)
 	if result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Artikel tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Artikel tidak ditemukan"})
 	}
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil data artikel",
 		"data":    article,
 	})
 }
 
 // CreateArticle - Membuat artikel baru
-func CreateArticle(c *gin.Context) {
+func CreateArticle(c *fiber.Ctx) error {
 	var input models.Article
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	// Generate slug dari judul
@@ -90,32 +86,29 @@ func CreateArticle(c *gin.Context) {
 
 	result := config.DB.Create(&input)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
 
 	// Reload dengan relasi
 	config.DB.Preload("Author").Preload("Category").First(&input, input.ID)
 
-	c.JSON(http.StatusCreated, gin.H{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Berhasil membuat artikel baru",
 		"data":    input,
 	})
 }
 
 // UpdateArticle - Memperbarui data artikel
-func UpdateArticle(c *gin.Context) {
-	id := c.Param("id")
+func UpdateArticle(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var article models.Article
 	if err := config.DB.First(&article, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Artikel tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Artikel tidak ditemukan"})
 	}
 
 	var input models.Article
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	// Update slug jika title berubah
@@ -144,32 +137,31 @@ func UpdateArticle(c *gin.Context) {
 	// Reload dengan relasi
 	config.DB.Preload("Author").Preload("Category").Preload("Comments").First(&article, id)
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil memperbarui data artikel",
 		"data":    article,
 	})
 }
 
 // DeleteArticle - Menghapus artikel
-func DeleteArticle(c *gin.Context) {
-	id := c.Param("id")
+func DeleteArticle(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var article models.Article
 	if err := config.DB.First(&article, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Artikel tidak ditemukan"})
-		return
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Artikel tidak ditemukan"})
 	}
 
 	// Hapus komentar terkait terlebih dahulu
 	config.DB.Where("article_id = ?", id).Delete(&models.Comment{})
 	config.DB.Delete(&article)
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil menghapus artikel",
 	})
 }
 
 // GetDashboardStats - Mengambil statistik dashboard
-func GetDashboardStats(c *gin.Context) {
+func GetDashboardStats(c *fiber.Ctx) error {
 	var totalArticles, totalAuthors, totalCategories, totalComments int64
 	var publishedArticles, draftArticles int64
 
@@ -190,9 +182,9 @@ func GetDashboardStats(c *gin.Context) {
 	config.DB.Preload("Article").
 		Order("created_at DESC").Limit(5).Find(&recentComments)
 
-	c.JSON(http.StatusOK, gin.H{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Berhasil mengambil statistik dashboard",
-		"data": gin.H{
+		"data": fiber.Map{
 			"total_articles":     totalArticles,
 			"total_authors":      totalAuthors,
 			"total_categories":   totalCategories,

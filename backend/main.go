@@ -7,8 +7,9 @@ import (
 	"github.com/blog-cms/backend/config"
 	"github.com/blog-cms/backend/routes"
 	"github.com/blog-cms/backend/seeders"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -24,24 +25,25 @@ func main() {
 	// Seed data awal (mengambil dari GetDB atau config.DB langsung)
 	seeders.SeedData(config.GetDB())
 
-	// Setup Gin
-	r := gin.Default()
+	// Setup Fiber
+	app := fiber.New(fiber.Config{
+		AppName: "Blog CMS API",
+	})
 
-	// CORS middleware - mengizinkan frontend React
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+	// Middleware
+	app.Use(logger.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5173, http://localhost:3000",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
 	// Setup routes
-	routes.SetupRoutes(r)
+	routes.SetupRoutes(app)
 
 	// Health check
-	r.GET("/api/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.Status(200).JSON(fiber.Map{
 			"status":  "ok",
 			"message": "Blog CMS API berjalan dengan baik",
 		})
@@ -54,7 +56,7 @@ func main() {
 	}
 
 	log.Printf("Server berjalan di http://localhost:%s", port)
-	if err := r.Run(":" + port); err != nil {
+	if err := app.Listen(":" + port); err != nil {
 		log.Fatal("Gagal menjalankan server:", err)
 	}
 }

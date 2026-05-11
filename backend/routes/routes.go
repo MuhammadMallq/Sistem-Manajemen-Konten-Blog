@@ -2,57 +2,48 @@ package routes
 
 import (
 	"github.com/blog-cms/backend/controllers"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(r *gin.Engine) {
+func SetupRoutes(app *fiber.App) {
 	// API v1 group
-	api := r.Group("/api/v1")
-	{
-		// Dashboard
-		api.GET("/dashboard", controllers.GetDashboardStats)
+	api := app.Group("/api/v1")
 
-		// Routes untuk Penulis (Authors)
-		authors := api.Group("/authors")
-		{
-			authors.GET("", controllers.GetAllAuthors)
-			authors.GET("/:id", controllers.GetAuthorByID)
-			authors.POST("", controllers.CreateAuthor)
-			authors.PUT("/:id", controllers.UpdateAuthor)
-			authors.DELETE("/:id", controllers.DeleteAuthor)
-		}
+	// Dashboard
+	api.Get("/dashboard", controllers.GetDashboardStats)
 
-		// Routes untuk Kategori (Categories)
-		categories := api.Group("/categories")
-		{
-			categories.GET("", controllers.GetAllCategories)
-			categories.GET("/:id", controllers.GetCategoryByID)
-			categories.POST("", controllers.CreateCategory)
-			categories.PUT("/:id", controllers.UpdateCategory)
-			categories.DELETE("/:id", controllers.DeleteCategory)
-		}
+	// Routes untuk Penulis (Authors)
+	authors := api.Group("/authors")
+	authors.Get("/", controllers.GetAllAuthors)
+	authors.Get("/:id", controllers.GetAuthorByID)
+	authors.Post("/", controllers.CreateAuthor)
+	authors.Put("/:id", controllers.UpdateAuthor)
+	authors.Delete("/:id", controllers.DeleteAuthor)
 
-		// Routes untuk Artikel (Articles)
-		articles := api.Group("/articles")
-		{
-			articles.GET("", controllers.GetAllArticles)
-			articles.GET("/:id", controllers.GetArticleByID)
-			articles.POST("", controllers.CreateArticle)
-			articles.PUT("/:id", controllers.UpdateArticle)
-			articles.DELETE("/:id", controllers.DeleteArticle)
-		}
+	// Routes untuk Kategori (Categories)
+	categories := api.Group("/categories")
+	categories.Get("/", controllers.GetAllCategories)
+	categories.Get("/:id", controllers.GetCategoryByID)
+	categories.Post("/", controllers.CreateCategory)
+	categories.Put("/:id", controllers.UpdateCategory)
+	categories.Delete("/:id", controllers.DeleteCategory)
 
-		// Routes untuk Komentar (Comments)
-		comments := api.Group("/comments")
-		{
-			comments.GET("", controllers.GetAllComments)
-			comments.GET("/:id", controllers.GetCommentByID)
-			comments.POST("", controllers.CreateComment)
-			comments.PUT("/:id", controllers.UpdateComment)
-			comments.DELETE("/:id", controllers.DeleteComment)
-		}
+	// Routes untuk Artikel (Articles)
+	articles := api.Group("/articles")
+	articles.Get("/", controllers.GetAllArticles)
+	articles.Get("/:id", controllers.GetArticleByID)
+	articles.Post("/", controllers.CreateArticle)
+	articles.Put("/:id", controllers.UpdateArticle)
+	articles.Delete("/:id", controllers.DeleteArticle)
 
-		// Komentar berdasarkan Artikel
-		api.GET("/articles/:id/comments", controllers.GetCommentsByArticleID)
-	}
+	// Routes untuk Komentar (Comments)
+	comments := api.Group("/comments")
+	comments.Get("/", controllers.GetAllComments)
+	comments.Get("/:id", controllers.GetCommentByID)
+	comments.Post("/", controllers.CreateComment)
+	comments.Put("/:id", controllers.UpdateComment)
+	comments.Delete("/:id", controllers.DeleteComment)
+
+	// Komentar berdasarkan Artikel
+	api.Get("/articles/:id/comments", controllers.GetCommentsByArticleID)
 }
